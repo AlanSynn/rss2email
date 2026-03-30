@@ -59,6 +59,8 @@ Some example schedules:
 | 0 10 \* \* 6     | saturday at 10:00                               |
 | 0/15 \* \* \* \* | every 15 minutes                                |
 
+The current workflow is set to run at `0 13 * * *`, which is 8:00 AM EST every day.
+
 Because the workflow looks at the previous successful run to determine which posts to send you, you can also disable the workflow by hand and pickup again later. There might be a limit to the amount of posts in a single RSS feed.
 
 The feed list is read from the root [`feeds.txt`](feeds.txt) file, so it can be edited directly from the Github web UI without touching the TypeScript source. Blank lines and lines starting with `#` are ignored.

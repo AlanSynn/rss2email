@@ -1,8 +1,9 @@
 name: Send email
 
 on:
-  # schedule:
-  #   - cron: '0 3 * * *'
+  schedule:
+    # 8:00 AM EST every day. GitHub Actions cron uses UTC, so this is 13:00 UTC.
+    - cron: '0 13 * * *'
   workflow_dispatch:
 
 jobs:
