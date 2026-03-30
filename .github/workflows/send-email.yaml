@@ -1,0 +1,61 @@
+name: Send email
+
+on:
+  # schedule:
+  #   - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: read-all
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Last successful run
+        id: last_success
+        run: echo "LAST_SUCCESS=$(gh api -XGET repos/${{ github.repository_owner }}/${{ github.event.repository.name }}/actions/workflows/send-email.yaml/runs --jq '.workflow_runs[0].run_started_at' -F status=success -F per_page=1)" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: npm ci
+
+      - name: Verify
+        run: npm run verify
+
+      - name: Create email
+        run: npm run email actionUrl=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} lastSuccess=${{ steps.last_success.outputs.LAST_SUCCESS }}
+
+      - name: Check email exists
+        id: check_email
+        run: |
+          if [ -f dist/email.html ]; then
+            echo "files_exists=true" >> $GITHUB_OUTPUT
+            echo "### New update email :inbox_tray:" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### No updates since last run :zzz:" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Send email
+        if: steps.check_email.outputs.files_exists == 'true'
+        uses: dawidd6/action-send-mail@v3.12.0
+        with:
+          server_address: ${{ vars.SMTP_SERVER }}
+          server_port: ${{ vars.SMTP_PORT }}
+
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+
+          subject: RSS to Email
+          to: ${{ secrets.MAIL_TO }}
+          from: ${{ secrets.SMTP_USERNAME }}
+
+          html_body: file://dist/email.html
