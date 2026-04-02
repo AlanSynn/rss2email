@@ -93,8 +93,10 @@ describe('evaluateDispatch', () => {
   })
 
   it('caps the initial run to three items', async () => {
+    const now = Date.now()
+    const recentDates = [1, 2, 3, 4].map((d) => new Date(now - d * 24 * 60 * 60 * 1000).toISOString())
     const decision = await evaluateDispatch({
-      cache: [createFeed('news', ['2026-03-26T08:00:00Z', '2026-03-26T07:00:00Z', '2026-03-26T06:00:00Z', '2026-03-26T05:00:00Z'])],
+      cache: [createFeed('news', recentDates)],
     })
 
     const sendDecision = expectDecisionKind(decision, 'send')
