@@ -94,7 +94,8 @@ describe('evaluateDispatch', () => {
 
   it('caps the initial run to three items', async () => {
     const now = Date.now()
-    const recentDates = [1, 2, 3, 4].map((d) => new Date(now - d * 24 * 60 * 60 * 1000).toISOString())
+    const MS_PER_DAY = 24 * 60 * 60 * 1000
+    const recentDates = [1, 2, 3, 4].map((d) => new Date(now - d * MS_PER_DAY).toISOString())
     const decision = await evaluateDispatch({
       cache: [createFeed('news', recentDates)],
     })
