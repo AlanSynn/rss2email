@@ -1,5 +1,5 @@
 import { Item, Output } from 'rss-parser'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { DispatchDecision, evaluateDispatch } from './evaluateDispatch'
 import { CustomItem, ItemLink, SettledFeed } from './parseFeeds'
 
@@ -93,17 +93,27 @@ describe('evaluateDispatch', () => {
   })
 
   it('caps the initial run to three items', async () => {
-    const decision = await evaluateDispatch({
-      cache: [createFeed('news', ['2026-03-26T08:00:00Z', '2026-03-26T07:00:00Z', '2026-03-26T06:00:00Z', '2026-03-26T05:00:00Z'])],
-    })
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-26T12:00:00Z'))
 
-    const sendDecision = expectDecisionKind(decision, 'send')
+    const now = Date.now()
+    const MS_PER_DAY = 24 * 60 * 60 * 1000
+    const recentDates = [1, 2, 3, 4].map((d) => new Date(now - d * MS_PER_DAY).toISOString())
+    try {
+      const decision = await evaluateDispatch({
+        cache: [createFeed('news', recentDates)],
+      })
 
-    expect(sendDecision.itemCount).toBe(3)
-    expect(sendDecision.filteredFeeds[0]?.status).toBe('fulfilled')
+      const sendDecision = expectDecisionKind(decision, 'send')
 
-    if (sendDecision.filteredFeeds[0]?.status === 'fulfilled') {
-      expect(sendDecision.filteredFeeds[0].value.items).toHaveLength(3)
+      expect(sendDecision.itemCount).toBe(3)
+      expect(sendDecision.filteredFeeds[0]?.status).toBe('fulfilled')
+
+      if (sendDecision.filteredFeeds[0]?.status === 'fulfilled') {
+        expect(sendDecision.filteredFeeds[0].value.items).toHaveLength(3)
+      }
+    } finally {
+      vi.useRealTimers()
     }
   })
 
