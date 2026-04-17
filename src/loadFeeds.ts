@@ -3,10 +3,19 @@ import path from 'node:path'
 
 const CONFIG_FILE = 'config.yml'
 const FALLBACK_FEED_LIST_FILE = 'feeds.txt'
+const RSS_FEEDS_KEY = 'rss_feeds:'
 
 const toError = (error: unknown) => (error instanceof Error ? error : new Error(String(error)))
 
-const stripQuotes = (value: string) => value.replace(/^['"]|['"]$/g, '')
+const stripQuotes = (value: string) => {
+  const trimmed = value.trim()
+
+  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+    return trimmed.slice(1, -1)
+  }
+
+  return trimmed
+}
 
 const parseFeedList = (contents: string, fileName: string) => {
   const feeds = contents
@@ -52,11 +61,11 @@ const readConfigFeeds = () => {
     const trimmed = line.trim()
 
     if (!inRssFeedSection) {
-      if (!trimmed.startsWith('rss_feeds:')) {
+      if (!trimmed.startsWith(RSS_FEEDS_KEY)) {
         continue
       }
 
-      const inlineValue = trimmed.slice('rss_feeds:'.length).trim()
+      const inlineValue = trimmed.slice(RSS_FEEDS_KEY.length).trim()
 
       if (inlineValue === '') {
         inRssFeedSection = true
@@ -70,7 +79,7 @@ const readConfigFeeds = () => {
       continue
     }
 
-    if (/^[-a-z_]+:/i.test(trimmed)) {
+    if (/^[a-z_][a-z_-]*:/i.test(trimmed)) {
       break
     }
 
