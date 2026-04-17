@@ -70,7 +70,7 @@ const readConfigFeeds = () => {
       continue
     }
 
-    if (/^[a-z_]+:/i.test(trimmed)) {
+    if (/^[a-z_-]+:/i.test(trimmed)) {
       break
     }
 
