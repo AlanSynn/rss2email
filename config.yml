@@ -1,0 +1,21 @@
+user_name: 'AlanSynn'
+repo_name: 'rss2email'
+show_authors: True
+show_links: True
+show_badge: True
+max_results: 100
+
+# email settings
+email_settings:
+  enabled: True
+  smtp_server: 'smtp.gmail.com'
+  smtp_port: 587
+  smtp_user: '${SMTP_USER}'
+  smtp_password: '${SMTP_PASSWORD}'
+
+# send email
+send_email: True
+email_recipient: '${EMAIL_RECIPIENT}'
+
+# RSS feeds
+rss_feeds: feeds.txt
