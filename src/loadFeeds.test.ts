@@ -16,10 +16,11 @@ describe('loadFeeds', () => {
     })
   })
 
-  it('loads feeds from the repository root file and ignores blank lines and comments', () => {
+  it('loads feeds using rss_feeds from config.yml and ignores blank lines and comments', () => {
     const tempDir = mkdtempSync(path.join(os.tmpdir(), 'rss-feeds-'))
 
     tempDirs.push(tempDir)
+    writeFileSync(path.join(tempDir, 'config.yml'), 'rss_feeds: feeds.txt\n')
     writeFileSync(
       path.join(tempDir, 'feeds.txt'),
       ['# Main feeds', '', 'https://lisyarus.github.io/blog/feed.xml', '  https://example.com/feed.xml  '].join('\n'),
@@ -30,10 +31,22 @@ describe('loadFeeds', () => {
     expect(loadFeeds()).toEqual(['https://lisyarus.github.io/blog/feed.xml', 'https://example.com/feed.xml'])
   })
 
-  it('fails fast when the root feed list is empty', () => {
+  it('falls back to feeds.txt when config.yml is missing', () => {
     const tempDir = mkdtempSync(path.join(os.tmpdir(), 'rss-feeds-'))
 
     tempDirs.push(tempDir)
+    writeFileSync(path.join(tempDir, 'feeds.txt'), 'https://example.com/feed.xml\n')
+
+    process.chdir(tempDir)
+
+    expect(loadFeeds()).toEqual(['https://example.com/feed.xml'])
+  })
+
+  it('fails fast when the configured feed list is empty', () => {
+    const tempDir = mkdtempSync(path.join(os.tmpdir(), 'rss-feeds-'))
+
+    tempDirs.push(tempDir)
+    writeFileSync(path.join(tempDir, 'config.yml'), 'rss_feeds: feeds.txt\n')
     writeFileSync(path.join(tempDir, 'feeds.txt'), '\n# no feeds configured yet\n')
 
     process.chdir(tempDir)

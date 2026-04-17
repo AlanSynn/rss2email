@@ -21,17 +21,18 @@ Say goodbye to constantly checking for updates, and hello to staying informed on
 ## Getting started
 
 1. [Fork](../../fork) this repository
-2. Update [`feeds.txt`](feeds.txt) in the repository root with your RSS feed(s), one URL per line
-3. The default configuration tracks `https://lisyarus.github.io/blog/feed.xml`
-4. Update the [cron schedule](.github/workflows/send-email.yaml#L5) in the workflow file
-5. Add the following [repository variables](../../settings/variables/actions) in settings:
+2. Update [`config.yml`](config.yml) if needed (the default `rss_feeds` points to [`feeds.txt`](feeds.txt))
+3. Update [`feeds.txt`](feeds.txt) in the repository root with your RSS feed(s), one URL per line
+4. The default configuration tracks `https://lisyarus.github.io/blog/feed.xml`
+5. Update the [cron schedule](.github/workflows/send-email.yaml#L5) in the workflow file
+6. Add the following [repository variables](../../settings/variables/actions) in settings:
    - `SMTP_SERVER` for example: smtp.gmail.com
    - `SMTP_PORT` for example: 587
-6. Add the following [repository secrets](../../settings/secrets/actions) in settings:
+7. Add the following [repository secrets](../../settings/secrets/actions) in settings:
    - `MAIL_TO` the mail address to send the email to
    - `SMTP_USERNAME`
    - `SMTP_PASSWORD`
-7. Done :muscle:
+8. Done :muscle:
 
 | :warning: | The above variables and secrets can also be changed directly in the [workflow](.github/workflows/send-email.yaml), but be aware that if your repo is public that this could expose your credentials. |
 | :-------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
