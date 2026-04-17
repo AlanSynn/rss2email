@@ -45,6 +45,18 @@ jobs:
             echo "### No updates since last run :zzz:" >> $GITHUB_STEP_SUMMARY
           fi
 
+      - name: Validate SMTP configuration
+        if: steps.check_email.outputs.files_exists == 'true'
+        run: |
+          if [ -z "${{ vars.SMTP_SERVER }}" ]; then
+            echo "Missing vars.SMTP_SERVER (set it in Actions Variables as SMTP_SERVER)" >&2
+            exit 1
+          fi
+          if [ -z "${{ vars.SMTP_PORT }}" ]; then
+            echo "Missing vars.SMTP_PORT (set it in Actions Variables as SMTP_PORT)" >&2
+            exit 1
+          fi
+
       - name: Send email
         if: steps.check_email.outputs.files_exists == 'true'
         uses: dawidd6/action-send-mail@v3.12.0
