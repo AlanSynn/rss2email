@@ -3,7 +3,7 @@ import path from 'node:path'
 
 const CONFIG_FILE = 'config.yml'
 const FALLBACK_FEED_LIST_FILE = 'feeds.txt'
-const RSS_FEEDS_KEY = 'rss_feeds:'
+const RSS_FEEDS_PATTERN = /^rss_feeds:\s*(.*)$/
 
 const toError = (error: unknown) => (error instanceof Error ? error : new Error(String(error)))
 
@@ -61,11 +61,13 @@ const readConfigFeeds = () => {
     const trimmed = line.trim()
 
     if (!inRssFeedSection) {
-      if (!trimmed.startsWith(RSS_FEEDS_KEY)) {
+      const rssFeedsMatch = trimmed.match(RSS_FEEDS_PATTERN)
+
+      if (!rssFeedsMatch) {
         continue
       }
 
-      const inlineValue = trimmed.slice(RSS_FEEDS_KEY.length).trim()
+      const inlineValue = rssFeedsMatch[1].trim()
 
       if (inlineValue === '') {
         inRssFeedSection = true
@@ -79,7 +81,7 @@ const readConfigFeeds = () => {
       continue
     }
 
-    if (/^[a-z_][a-z_-]*:/i.test(trimmed)) {
+    if (!line.startsWith(' ') && !line.startsWith('\t') && /^[a-z_][a-z_-]*:\s*(?:.*)?$/i.test(trimmed)) {
       break
     }
 
