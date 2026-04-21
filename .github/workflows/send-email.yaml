@@ -46,18 +46,56 @@ jobs:
           fi
 
       - name: Load SMTP defaults from config.yml
+        if: steps.check_email.outputs.files_exists == 'true'
         id: smtp_defaults
         run: |
-          node -e "const fs = require('node:fs'); const config = fs.readFileSync('config.yml', 'utf8'); const readValue = (key) => { const m = config.match(new RegExp(`^\\s*${key}:\\s*(.+)$`, 'm')); return m ? m[1].trim().replace(/^['\\\"]|['\\\"]$/g, '') : ''; }; const server = readValue('smtp_server'); const port = readValue('smtp_port'); if (!server || !port) { console.error('Missing smtp_server or smtp_port in config.yml'); process.exit(1); } fs.appendFileSync(process.env.GITHUB_OUTPUT, `server=${server}\\nport=${port}\\n`);"
+          node <<'NODE'
+          const fs = require('node:fs')
+          const config = fs.readFileSync('config.yml', 'utf8')
+          const readValue = (key) => {
+            const line = config
+              .split(/\r?\n/)
+              .find((entry) => entry.trimStart().startsWith(`${key}:`))
+            if (!line) return ''
+            const raw = line.slice(line.indexOf(':') + 1).trim()
+            const singleQuoted = raw.startsWith("'") && raw.endsWith("'")
+            const doubleQuoted = raw.startsWith('"') && raw.endsWith('"')
+            return singleQuoted || doubleQuoted ? raw.slice(1, -1) : raw
+          }
+
+          const server = readValue('smtp_server')
+          const port = readValue('smtp_port')
+
+          if (!server || !port) {
+            console.error('Missing smtp_server or smtp_port in config.yml')
+            process.exit(1)
+          }
+
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `server=${server}\nport=${port}\n`)
+          NODE
+
+      - name: Resolve SMTP configuration
+        if: steps.check_email.outputs.files_exists == 'true'
+        id: smtp
+        env:
+          SMTP_SERVER_VAR: ${{ vars.SMTP_SERVER }}
+          SMTP_PORT_VAR: ${{ vars.SMTP_PORT }}
+          SMTP_SERVER_DEFAULT: ${{ steps.smtp_defaults.outputs.server }}
+          SMTP_PORT_DEFAULT: ${{ steps.smtp_defaults.outputs.port }}
+        run: |
+          SMTP_SERVER="${SMTP_SERVER_VAR:-$SMTP_SERVER_DEFAULT}"
+          SMTP_PORT="${SMTP_PORT_VAR:-$SMTP_PORT_DEFAULT}"
+          echo "server=$SMTP_SERVER" >> "$GITHUB_OUTPUT"
+          echo "port=$SMTP_PORT" >> "$GITHUB_OUTPUT"
 
       - name: Validate SMTP configuration
         if: steps.check_email.outputs.files_exists == 'true'
         run: |
-          if [ -z "${{ vars.SMTP_SERVER || steps.smtp_defaults.outputs.server }}" ]; then
+          if [ -z "${{ steps.smtp.outputs.server }}" ]; then
             echo "Missing SMTP server in repository variable SMTP_SERVER and config.yml smtp_server" >&2
             exit 1
           fi
-          if [ -z "${{ vars.SMTP_PORT || steps.smtp_defaults.outputs.port }}" ]; then
+          if [ -z "${{ steps.smtp.outputs.port }}" ]; then
             echo "Missing SMTP port in repository variable SMTP_PORT and config.yml smtp_port" >&2
             exit 1
           fi
@@ -66,8 +104,8 @@ jobs:
         if: steps.check_email.outputs.files_exists == 'true'
         uses: dawidd6/action-send-mail@v3.12.0
         with:
-          server_address: ${{ vars.SMTP_SERVER || steps.smtp_defaults.outputs.server }}
-          server_port: ${{ vars.SMTP_PORT || steps.smtp_defaults.outputs.port }}
+          server_address: ${{ steps.smtp.outputs.server }}
+          server_port: ${{ steps.smtp.outputs.port }}
 
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
