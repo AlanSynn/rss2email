@@ -45,15 +45,20 @@ jobs:
             echo "### No updates since last run :zzz:" >> $GITHUB_STEP_SUMMARY
           fi
 
+      - name: Load SMTP defaults from config.yml
+        id: smtp_defaults
+        run: |
+          node -e "const fs = require('node:fs'); const config = fs.readFileSync('config.yml', 'utf8'); const readValue = (key) => { const m = config.match(new RegExp(`^\\s*${key}:\\s*(.+)$`, 'm')); return m ? m[1].trim().replace(/^['\\\"]|['\\\"]$/g, '') : ''; }; const server = readValue('smtp_server'); const port = readValue('smtp_port'); if (!server || !port) { console.error('Missing smtp_server or smtp_port in config.yml'); process.exit(1); } fs.appendFileSync(process.env.GITHUB_OUTPUT, `server=${server}\\nport=${port}\\n`);"
+
       - name: Validate SMTP configuration
         if: steps.check_email.outputs.files_exists == 'true'
         run: |
-          if [ -z "${{ vars.SMTP_SERVER }}" ]; then
-            echo "Missing vars.SMTP_SERVER (set it in Actions Variables as SMTP_SERVER)" >&2
+          if [ -z "${{ vars.SMTP_SERVER || steps.smtp_defaults.outputs.server }}" ]; then
+            echo "Missing SMTP server in repository variable SMTP_SERVER and config.yml smtp_server" >&2
             exit 1
           fi
-          if [ -z "${{ vars.SMTP_PORT }}" ]; then
-            echo "Missing vars.SMTP_PORT (set it in Actions Variables as SMTP_PORT)" >&2
+          if [ -z "${{ vars.SMTP_PORT || steps.smtp_defaults.outputs.port }}" ]; then
+            echo "Missing SMTP port in repository variable SMTP_PORT and config.yml smtp_port" >&2
             exit 1
           fi
 
@@ -61,8 +66,8 @@ jobs:
         if: steps.check_email.outputs.files_exists == 'true'
         uses: dawidd6/action-send-mail@v3.12.0
         with:
-          server_address: ${{ vars.SMTP_SERVER }}
-          server_port: ${{ vars.SMTP_PORT }}
+          server_address: ${{ vars.SMTP_SERVER || steps.smtp_defaults.outputs.server }}
+          server_port: ${{ vars.SMTP_PORT || steps.smtp_defaults.outputs.port }}
 
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
