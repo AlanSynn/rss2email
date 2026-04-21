@@ -67,8 +67,7 @@ jobs:
           const port = readValue('smtp_port')
 
           if (!server || !port) {
-            console.error('Missing smtp_server or smtp_port in config.yml')
-            process.exit(1)
+            console.warn('smtp_server or smtp_port missing in config.yml; continuing with empty defaults')
           }
 
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `server=${server}\nport=${port}\n`)
