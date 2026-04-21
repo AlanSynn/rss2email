@@ -92,11 +92,11 @@ jobs:
         if: steps.check_email.outputs.files_exists == 'true'
         run: |
           if [ -z "${{ steps.smtp.outputs.server }}" ]; then
-            echo "Missing SMTP server in repository variable SMTP_SERVER and config.yml smtp_server" >&2
+            echo "Missing SMTP server in repository variable SMTP_SERVER and config.yml email_settings.smtp_server" >&2
             exit 1
           fi
           if [ -z "${{ steps.smtp.outputs.port }}" ]; then
-            echo "Missing SMTP port in repository variable SMTP_PORT and config.yml smtp_port" >&2
+            echo "Missing SMTP port in repository variable SMTP_PORT and config.yml email_settings.smtp_port" >&2
             exit 1
           fi
 
